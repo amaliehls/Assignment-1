@@ -38,7 +38,7 @@ N.B. Create a GitHub repository for the Language Development in ASD set of assig
 Set the working directory (the directory with your data and code for these assignments):
 
 ```{r}
-
+setwd("~/Desktop/R Saves Semester 3/Assignment1")
 ```
 
 Load the three data sets, after downloading them from dropbox and saving them in your working directory:
@@ -47,7 +47,9 @@ Load the three data sets, after downloading them from dropbox and saving them in
 * Word data: https://www.dropbox.com/s/8ng1civpl2aux58/token_train.csv?dl=0
 
 ```{r}
-
+demo_train = read.csv("~/Desktop/R Saves Semester 3/Assignment1/demo_train(1).csv")
+LU_train <- read.csv("~/Desktop/R Saves Semester 3/Assignment1/LU_train.csv")
+token_train <- read.csv("~/Desktop/R Saves Semester 3/Assignment1/token_train.csv")
 ```
 
 Explore the 3 datasets (e.g. visualize them, summarize them, etc.). You will see that the data is messy, since the psychologists collected the demographic data, a linguist analyzed the length of utterance in May 2014 and the same linguist analyzed the words several months later. In particular:
@@ -64,15 +66,23 @@ Tip: Look into the package data.table, or google "how to rename variables in R"
 
 
 ```{r}
+colnames(LU_train)[1]="ID"
+colnames(token_train)[1]="ID"
+colnames(demo_train)[1]="ID"
+colnames(demo_train)[2]="VISIT"
 
 ```
 
 2b. Find a way to homogeneize the way "visit" is reported. If you look into the original data sets, you will see that in the LU data and the Token data, Visits are called "visit 1" in stead of just 1 (which is the case in the demographic data set).
 Tip: There is a package called stringr, which will be very handy for you also in future assignments. We will return to this package later, but for now use the str_extract () to extract only the number from the variable Visit in each data set. Tip: type ?str_extract() after loading the library, for examples of how to use it.
 
+#Prepare regular expression
 ```{r}
+regexp="[[:digit:]]+"
+LU_train$VISIT=str_extract_all(LU_train$VISIT,regexp)
+token_train$VISIT =str_extract(token_train$VISIT,regexp)
 
-
+#or use \\d : demo_train$VISIT=str_extract(demo_train$VISIT,"\\d")
 ```
 
 2c. We also need to make a small adjustment to the content of the Child.ID coloumn in the demographic data. Within this column, names that are not abbreviations do not end with "." (i.e. Adam), which is the case in the other two data sets (i.e. Adam.). If The content of the two variables isn't identical the data sets will not be merged sufficiently.
@@ -87,7 +97,9 @@ Tip: You will have to do identical work for both data sets, so to save time on t
 
 
 ```{r}
-
+demo_train$ID=gsub("\\.","",demo_train$ID)
+LU_train$ID=gsub("\\.","",LU_train$ID)
+token_train$ID=gsub("\\.","",token_train$ID)
 ```
 
 2d. Now that the nitty gritty details of the different data sets are fixed, we want to make a subset of each data set only containig the variables that we wish to use in the final data set.
@@ -105,7 +117,11 @@ The variables we need are: Child.ID, Visit, Ethnicity, Diagnosis, Gender, Age, A
 It would be smart to rename the MullenRaw and ExpressiveLangRaw into something you can remember (i.e. nonVerbalIQ, verbalIQ)
 
 ```{r}
+library(tidyverse)
+colnames(demo_train)[24]="nonVerbalIQ"
+colnames(demo_train)[35]="VerbalIQ"
 
+#rename columns to something we remember what is
 
 ```
 
@@ -116,7 +132,13 @@ Tip: Merge only works for two data frames at the time.
 Tip: Check the number of observations in the datasets before and after merging. What is going on?
 
 ```{r}
+#select columns of interest and save in new df
+demo_train2=select(demo_train,1,2,3,4,7,9,14,24,35)
+LU_train2=select(LU_train,1,2,3,4,8,9)
+token_train2=select(token_train,1,2,3,4,6,7)
 
+mergesemifinal=merge(demo_train2,LU_train2)
+final=merge(mergesemifinal,token_train2)
 ```
 
 Are we done yet?
@@ -130,7 +152,13 @@ Tip: the final dataset should have as many rows as the the old one.
 
 
 ```{r}
-
+visit1 = final[which(final$VISIT=="1"),]
+test=select(visit1,1,7,8,9)
+final2=merge(test,final,by="ID")
+final <- select(final2,1,2,3,4,5,6,7,8,9,13,14,15,16,17,18,19,20)
+colnames(final)[2]="ADOS"
+colnames(final)[3]="nonVerbalIQ"
+colnames(final)[4]="VerbalIQ"
 ```
 
 Now, we are almost ready to actually start working with the data. However, here are some additional finishing touches:
@@ -138,21 +166,32 @@ Now, we are almost ready to actually start working with the data. However, here 
 * in some experiments your participants must be anonymous. Therefore we wish to turn the CHILD.ID into numbers. 
 Tip: as.numeric() might be a useful function, but not alone.
 
+```{r}
+final$ID=as.numeric(as.factor(final$ID))
+```
+
 * Note that visit is (probably) not defined as numeric. Turn it into a numeric variable
+
+```{r}
+final$VISIT=as.numeric(final$VISIT)
+```
 
 * In order to make it easier to work with this nice, clean dataset in the future, it is practical to make sure the variables have sensible values. E.g. right now gender is marked 1 and 2, but in two weeks you will not be able to remember, which gender were connected to which number, so change the values from 1 and 2 to F and M in the gender variable. For the same reason, you should also change the values of Diagnosis from A and B to ASD (autism spectrum disorder) and TD (typically developing). 
 Tip: Google "how to rename levels in R".
 
 ```{r}
+final$Gender <- as.factor(final$Gender)
+final$Gender=revalue(final$Gender,c("1"="M","2"="F"))
 
-
+final$Diagnosis=as.factor(final$Diagnosis)
+final$Diagnosis=revalue(final$Diagnosis,c("A"="ASD","B"="TD"))
 ```
 
 
 Save the data set using into a csv file. Hint: look into write.csv()
 
 ```{r}
-
+write.csv(final,file="Assignment1data")
 ```
 
 
