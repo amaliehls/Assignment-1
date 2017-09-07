@@ -207,8 +207,20 @@ List all kids who:
 3. have not completed all trials. Tip: Use pipes to solve this
 
 ```{r}
+#1)
+highMLU = filter(final, CHI_MLU>2.7)
+highMLU2 = select(highMLU,ID)
+unique(highMLU2)
 
+#2)
+final$ID[final$VISIT==1 & final$CHI_MLU < 1.5]
 
+library(data.table)
+final %>%
+  group_by(ID) %>%
+  summarise(no_rows=length(ID))
+
+final[,.N,by=ID]
 ```
 
 
@@ -228,6 +240,12 @@ USING SELECT
 2. What happens if you include the name of a variable multiple times in a select() call?
 
 ```{r}
+#1)
+ASDkids=select(final,1,7,12,17)
+ASDkids=ASDkids[ASDkids$Diagnosis=="ASD",]
+
+#2)
+#Nothing happens ..
 
 ```
 
