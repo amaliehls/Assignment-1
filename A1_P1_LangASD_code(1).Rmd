@@ -1,7 +1,7 @@
 ---
 title: "A1_P1_Student"
-author: "Céline Carlsen"
-date: "29/8/2017"
+author: "Agnete Kvorning, Anna Hinrichsen, Karl Hausmann Bach, Amalie Holm"
+date: "11/9/2017"
 output: html_document
 ---
 
