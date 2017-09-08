@@ -271,7 +271,14 @@ USING MUTATE, SUMMARISE and PIPES
 3. The solution to task above enables us to assess the average amount of words produced by each child. Why don't we just use these average values to describe the language production of the children? What is the advantage of keeping all the data?
 
 ```{r}
+#1)
 final$grand_mean <- mean(final$tokens_CHI)
+
+#2)
 meanwords=group_by(final, ID) %>% summarize(mean_tokens_CHI = mean(tokens_CHI))
 final1=merge(final,meanwords,by="ID")
+
+#3)
+
+
 ```
