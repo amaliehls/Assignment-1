@@ -39,6 +39,10 @@ Set the working directory (the directory with your data and code for these assig
 
 ```{r}
 setwd("~/Desktop/R Saves Semester 3/Assignment1")
+library(stringr)
+library(tidyverse)
+library(dplyr)
+library(data.table)
 ```
 
 Load the three data sets, after downloading them from dropbox and saving them in your working directory:
@@ -117,7 +121,6 @@ The variables we need are: Child.ID, Visit, Ethnicity, Diagnosis, Gender, Age, A
 It would be smart to rename the MullenRaw and ExpressiveLangRaw into something you can remember (i.e. nonVerbalIQ, verbalIQ)
 
 ```{r}
-library(tidyverse)
 colnames(demo_train)[24]="nonVerbalIQ"
 colnames(demo_train)[35]="VerbalIQ"
 
@@ -215,7 +218,7 @@ unique(highMLU2)
 #2)
 final$ID[final$VISIT==1 & final$CHI_MLU < 1.5]
 
-library(data.table)
+#3)
 final %>%
   group_by(ID) %>%
   summarise(no_rows=length(ID))
@@ -230,7 +233,19 @@ USING ARRANGE
 2. Sort kids to find the kid who produced the least amount of words on the 1st visit.
 
 ```{r}
+#1)
+arrange(select(final[which(final$VISIT=="6"),],1,17), desc(tokens_CHI))
 
+#visit6=final[which(final$VISIT=="6"),]
+#visit6=select(visit6,1,17)
+#arrange(visit6,desc(tokens_CHI))
+
+#2)
+arrange(select(final[which(final$VISIT=="1"),],1,17),tokens_CHI)
+
+#leastwords=final[which(final$VISIT=="1"),]
+#leastwords=select(leastwords,1,17)
+#arrange(leastwords,tokens_CHI)
 
 ```
 
@@ -256,6 +271,7 @@ USING MUTATE, SUMMARISE and PIPES
 3. The solution to task above enables us to assess the average amount of words produced by each child. Why don't we just use these average values to describe the language production of the children? What is the advantage of keeping all the data?
 
 ```{r}
-
-
+final$grand_mean <- mean(final$tokens_CHI)
+meanwords=group_by(final, ID) %>% summarize(mean_tokens_CHI = mean(tokens_CHI))
+final1=merge(final,meanwords,by="ID")
 ```
