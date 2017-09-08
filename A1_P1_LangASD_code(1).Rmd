@@ -83,6 +83,7 @@ Tip: There is a package called stringr, which will be very handy for you also in
 
 #Prepare regular expression
 ```{r}
+#Extract only digits and the save to the variable
 regexp="[[:digit:]]+"
 LU_train$VISIT=str_extract_all(LU_train$VISIT,regexp)
 token_train$VISIT =str_extract(token_train$VISIT,regexp)
@@ -102,6 +103,7 @@ Tip: You will have to do identical work for both data sets, so to save time on t
 
 
 ```{r}
+#Load data
 demo_train$ID=gsub("\\.","",demo_train$ID)
 LU_train$ID=gsub("\\.","",LU_train$ID)
 token_train$ID=gsub("\\.","",token_train$ID)
@@ -122,10 +124,9 @@ The variables we need are: Child.ID, Visit, Ethnicity, Diagnosis, Gender, Age, A
 It would be smart to rename the MullenRaw and ExpressiveLangRaw into something you can remember (i.e. nonVerbalIQ, verbalIQ)
 
 ```{r}
+#rename columns to something we remember what is
 colnames(demo_train)[24]="nonVerbalIQ"
 colnames(demo_train)[35]="VerbalIQ"
-
-#rename columns to something we remember what is
 
 ```
 
@@ -141,6 +142,7 @@ demo_train2=select(demo_train,1,2,3,4,7,9,14,24,35)
 LU_train2=select(LU_train,1,2,3,4,8,9)
 token_train2=select(token_train,1,2,3,4,6,7)
 
+#merge the different dataframes
 mergesemifinal=merge(demo_train2,LU_train2)
 final=merge(mergesemifinal,token_train2)
 ```
@@ -156,10 +158,16 @@ Tip: the final dataset should have as many rows as the the old one.
 
 
 ```{r}
+#create a dataframe with only data from visit 1
 visit1 = final[which(final$VISIT=="1"),]
+
+#select only relevant columns
 test=select(visit1,1,7,8,9)
+
+#merge the relevant columnsback to the original dataframe
 final2=merge(test,final,by="ID")
 final <- select(final2,1,2,3,4,5,6,7,8,9,13,14,15,16,17,18,19,20)
+
 colnames(final)[2]="ADOS"
 colnames(final)[3]="nonVerbalIQ"
 colnames(final)[4]="VerbalIQ"
@@ -171,6 +179,7 @@ Now, we are almost ready to actually start working with the data. However, here 
 Tip: as.numeric() might be a useful function, but not alone.
 
 ```{r}
+#Give each child a unique number
 final$ID=as.numeric(as.factor(final$ID))
 ```
 
@@ -184,9 +193,11 @@ final$VISIT=as.numeric(final$VISIT)
 Tip: Google "how to rename levels in R".
 
 ```{r}
+#Replace 1 with M and 2 with F
 final$Gender <- as.factor(final$Gender)
 final$Gender=revalue(final$Gender,c("1"="M","2"="F"))
 
+#Replace 1 with ASD and 2 with TD
 final$Diagnosis=as.factor(final$Diagnosis)
 final$Diagnosis=revalue(final$Diagnosis,c("A"="ASD","B"="TD"))
 ```
@@ -260,8 +271,11 @@ USING SELECT
 
 ```{r}
 #1)
-ASDkids=select(final,1,7,12,17)
-ASDkids=ASDkids[ASDkids$Diagnosis=="ASD",]
+#Select columns
+ASD=select(final,1,7,12,17)
+
+#Select only kids with ASD
+ASD=ASD[ASD$Diagnosis=="ASD",]
 
 #2)
 #The variable is selected only once
