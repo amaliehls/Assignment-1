@@ -43,6 +43,7 @@ library(stringr)
 library(tidyverse)
 library(dplyr)
 library(data.table)
+library(plyr)
 ```
 
 Load the three data sets, after downloading them from dropbox and saving them in your working directory:
@@ -211,19 +212,20 @@ List all kids who:
 
 ```{r}
 #1)
-highMLU = filter(final, CHI_MLU>2.7)
-highMLU2 = select(highMLU,ID)
-unique(highMLU2)
+#More than 2.7 morphemes at least once across the visits
+unique(select(filter(final, CHI_MLU>2.7),ID))
+
 
 #2)
+#Less than 1.5 morphemes
 final$ID[final$VISIT==1 & final$CHI_MLU < 1.5]
 
 #3)
-final %>%
-  group_by(ID) %>%
-  summarise(no_rows=length(ID))
+#dataframe with children who have not completed all trials
+df =final[final$ID %in% names(table(final$ID))[table(final$ID)<6],]
 
-final[,.N,by=ID]
+#list of these kids
+unique(df$ID)
 ```
 
 
@@ -235,6 +237,7 @@ USING ARRANGE
 ```{r}
 #1)
 arrange(select(final[which(final$VISIT=="6"),],1,17), desc(tokens_CHI))
+#Kid number 55
 
 #visit6=final[which(final$VISIT=="6"),]
 #visit6=select(visit6,1,17)
@@ -242,6 +245,7 @@ arrange(select(final[which(final$VISIT=="6"),],1,17), desc(tokens_CHI))
 
 #2)
 arrange(select(final[which(final$VISIT=="1"),],1,17),tokens_CHI)
+#Kid number 57
 
 #leastwords=final[which(final$VISIT=="1"),]
 #leastwords=select(leastwords,1,17)
@@ -260,7 +264,7 @@ ASDkids=select(final,1,7,12,17)
 ASDkids=ASDkids[ASDkids$Diagnosis=="ASD",]
 
 #2)
-#Nothing happens ..
+#The variable is selected only once
 
 ```
 
@@ -272,13 +276,15 @@ USING MUTATE, SUMMARISE and PIPES
 
 ```{r}
 #1)
+#Add the grand mean to a new column
 final$grand_mean <- mean(final$tokens_CHI)
 
 #2)
+#Ad a column with each child's mean 
 meanwords=group_by(final, ID) %>% summarize(mean_tokens_CHI = mean(tokens_CHI))
 final1=merge(final,meanwords,by="ID")
 
 #3)
-
+#The mean is a generalized measure. Maybe the child scored very differently in each visit. More data is more information that might be relevant
 
 ```
