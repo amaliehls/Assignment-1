@@ -20,7 +20,7 @@ N.B. There are several datasets for this exercise, so pay attention to which one
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-library(stringr);library(tidyverse);library(dplyr);library(lme4)
+library(stringr);library(tidyverse);library(dplyr);library(lme4);library(caret);library(mlbench)
 
 Assignment1data = read.csv("~/Desktop/R Saves Semester 3/Assignment1/Assignment1data")
 demo_test = read.csv("~/Desktop/R Saves Semester 3/Assignment1/demo_test.csv")
@@ -80,7 +80,8 @@ final$Diagnosis=revalue(final$Diagnosis,c("A"="ASD","B"="TD"))
 
 write.csv(final,file="Clean_testdata")
 
-
+data.train = na.omit(Assignment1data)
+data.test = final
 
 ```
 
@@ -95,17 +96,18 @@ How did your models from last time perform? In this exercise you have to compare
 - optional: predictions are never certain, can you identify the uncertainty of the predictions? (e.g. google predictinterval())
 
 ```{r setup, include=FALSE}
-model.train = lmer(CHI_MLU ~ VISIT * Diagnosis + types_CHI + (1+VISIT|ID), data=Assignment1data, REML = FALSE)
+model.train = lmer(CHI_MLU ~ VISIT * Diagnosis + types_CHI + (1+VISIT|ID), data=data.train, REML = FALSE)
 
 #root mean square error on train data
-rmse(model.train,Assignment1data) 
+rmse(model.train,data.train) 
 
-rmse(model.train,final) 
-
+#root mean square error on test data
+rmse(model.train,data.test) 
 
 ```
 
 Root mean square error on train data is 0.31
+Root mean square error on test data is 0.57
 
 ### Exercise 2) Model Selection via Cross-validation (N.B: ChildMLU!)
 
@@ -122,6 +124,27 @@ In this exercise you have to use cross-validation to calculate the predictive er
 - Bonus Question 1: How would you go comparing the performance of the basic model and the cross-validated model on the testing set?
 - Bonus Question 2: What is the effect of changing the number of folds? Can you plot RMSE as a function of number of folds?
 - Bonus Question 3: compare the cross-validated predictive error against the actual predictive error on the test data
+
+```{r setup, include=FALSE}
+model.MLU = lmer(CHI_MLU ~ VISIT * Diagnosis + (1+VISIT|ID), data=data.train, REML = FALSE)
+
+folds = createFolds(data.train,, k=4)
+folds=as.data.frame(folds)
+
+PTOT=NULL
+for (i in 1:346)
+  {
+  DataC1=data.train[data.train==i,]
+  DataCV=data.train[data.train!=i]
+  M1 = model.MLU
+  P1 = predict(M1,DataC1, allow.new.levels=T)
+  names(P1)=NULL
+  P1
+  PTOT = c(PTOT,P1)
+}
+
+```
+
 
 ### Exercise 3) Assessing the single child
 
