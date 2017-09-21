@@ -265,7 +265,7 @@ summary(leg)
 anova(leg.NULL,leg) # better model fit with VISIT as the first predictor
 
 leg.NULL = lmer(CHI_MLU ~ VISIT + Diagnosis + (1+VISIT|ID), data=data, REML = FALSE)
-leg = lmer(CHI_MLU ~ VISIT + Diagnosis + types_CHI + (1+VISIT|ID), data=data, REML = FALSE)
+leg = lmer(CHI_MLU ~ VISIT * Diagnosis + types_CHI + (1+VISIT|ID), data=data, REML = FALSE)
 summary(leg)
 anova(leg.NULL,leg)
 r.squaredGLMM(leg.NULL)
