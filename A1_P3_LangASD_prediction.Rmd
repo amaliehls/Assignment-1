@@ -20,7 +20,7 @@ N.B. There are several datasets for this exercise, so pay attention to which one
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-library(stringr);library(tidyverse);library(plyr);library(dplyr);library(lme4);library(modelr);library(caret)
+library(stringr);library(tidyverse);library(plyr);library(dplyr);library(lme4);library(modelr);library(caret);library(Metrics)
 
 Assignment1data = read.csv("~/Desktop/R Saves Semester 3/Assignment1/Assignment1data")
 demo_test = read.csv("~/Desktop/R Saves Semester 3/Assignment1/demo_test.csv")
@@ -126,17 +126,27 @@ In this exercise you have to use cross-validation to calculate the predictive er
 - Bonus Question 3: compare the cross-validated predictive error against the actual predictive error on the test data
 
 ```{r setup, include=FALSE}
+data.train=na.omit(data.train)
+data.test=na.omit(data.test)
 
-PTOT=NULL
-for (i in 1:352)
+folds = createFolds(unique(data.train$ID),k=5)
+n=1
+error.train=NULL
+error.test=NULL
+for (i in folds)
   {
-  DataC1=data.train[data.train==i,]
-  DataCV=data.train[data.train!=i,]
-  M1 = lmer(CHI_MLU ~ VISIT * Diagnosis + (1+VISIT|ID), data=DataCV)
-  P1 = predict(M1,DataC1, allow.new.levels=T)
-  names(P1)=NULL
-  P1
-  PTOT = c(PTOT,P1)
+  testD=data.train[data.train$ID %in% i,]
+  trainD=data.train[!(data.train$ID %in% i),]
+  Mtrain = lmer(CHI_MLU ~ VISIT * Diagnosis + (1+VISIT|ID), data=trainD)
+  pred = predict(Mtrain,testD, allow.new.levels=TRUE)
+  error.train[n]=modelr::rmse(Mtrain,trainD)
+  error.test[n]=Metrics::rmse(testD$CHI_MLU,pred)
+  
+  #error.trains = c(error.trains,error.train[n])
+  #error.tests = c(error.tests, error.test[n])
+
+  n=n+1
+  
 }
 
 
