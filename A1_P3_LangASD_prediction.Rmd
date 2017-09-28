@@ -118,6 +118,13 @@ In this exercise you have to use cross-validation to calculate the predictive er
 - Create the basic model of ChildMLU as a function of Time and Diagnosis (don't forget the random effects!).
 - Make a cross-validated version of the model. (Tips: google the function "createFolds";  loop through each fold, train a model on the other folds and test it on the fold)
 - Report the results and comment on them.
+Train:
+Root mean square error in the 5 folds: 0.3408984 0.3305857 0.3527871 0.3446326 0.3489496
+Mean: 0.3435707
+
+Test:
+Root mean square error in the 5 folds: 0.9327352 0.6015853 0.9676635 0.6663922 0.5383527
+Mean: 0.7413458
 
 - Now try to find the best possible predictive model of ChildMLU, that is, the one that produces the best cross-validated results.
 
@@ -164,10 +171,82 @@ You want to evaluate:
 - how does the child fare in ChildMLU compared to the average TD child at each visit? Define the distance in terms of absolute difference between this Child and the average TD.
 (Tip: recreate the equation of the model: Y=Intercept+BetaX1+BetaX2, etc; input the average of the TD group  for each parameter in the model as X1, X2, etc.).
 
+```{r setup, include=FALSE}
+#Calculate mean of types for TD during visits
+typesdf=data.train[data.train$VISIT==1 & data.train$Diagnosis=="TD",]
+mean(typesdf$types_CHI)
+
+TypesVisit1 = 44.75
+TypesVisit2 = 94.28125
+TypesVisit3 = 133
+TypesVisit4 = 161.0625
+TypesVisit5 = 175.3548
+TypesVisit6 = 174.6071
+
+#Equation for visit 1, TD kids, mean of types and interaction
+#Diagnosis TD is equal to 1
+y = 0.9701074 + 1*0.0048298 + 1*-0.2007901 + 44.75*0.0085584 + 1*1*0.1202236
+y = 0.9701074 + 2*0.0048298 + 1*-0.2007901 + 94.28125*0.0085584 + 1*1*0.1202236
+y = 0.9701074 + 3*0.0048298 + 1*-0.2007901 + 133*0.0085584 + 1*1*0.1202236
+y = 0.9701074 + 4*0.0048298 + 1*-0.2007901 + 161.0625*0.0085584 + 1*1*0.1202236
+y = 0.9701074 + 5*0.0048298 + 1*-0.2007901 + 175.3548*0.0085584 + 1*1*0.1202236
+y = 0.9701074 + 6*0.0048298 + 1*-0.2007901 + 174.6071*0.0085584 + 1*1*0.1202236
+
+MLUvisit1 = 1.277359
+MLUvisit2 = 1.706097
+MLUvisit3 = 2.042298
+MLUvisit4 = 2.287297
+MLUvisit5 = 2.414446
+MLUvisit6 = 2.412877
+
+Bernievisit1
+Bernievisit2
+Bernievisit3
+Bernievisit4
+Bernievisit5
+Bernievisit6
+
+
+
+
+
+```
+
 - how does the child fare compared to the model predictions at Visit 6? Is the child below or above expectations? (tip: use the predict() function on Bernie's data only and compare the prediction with the actual performance of the child)
 
-[HERE GOES YOUR ANSWER]
+```{r setup, include=FALSE}
+#merge the relevant columnsback to the original dataframe
+final_withnames <- select(final2,1,2,3,4,5,6,7,8,9,13,14,15,16,17,18,19,20)
 
+colnames(final_withnames)[2]="ADOS"
+colnames(final_withnames)[3]="nonVerbalIQ"
+colnames(final_withnames)[4]="VerbalIQ"
+
+final_withnames$VISIT=as.numeric(final_withnames$VISIT)
+
+#Replace 1 with M and 2 with F
+final_withnames$Gender <- as.factor(final_withnames$Gender)
+final_withnames$Gender=revalue(final_withnames$Gender,c("1"="M","2"="F"))
+
+#Replace 1 with ASD and 2 with TD
+final_withnames$Diagnosis=as.factor(final_withnames$Diagnosis)
+final_withnames$Diagnosis=revalue(final_withnames$Diagnosis,c("A"="ASD","B"="TD"))
+
+
+#now we are ready to extract bernie
+bernie=final_withnames[final_withnames$ID=="Bernie",]
+
+```
+
+```{r setup, include=FALSE}
+
+
+```
+
+```{r setup, include=FALSE}
+
+
+```
 ### OPTIONAL: Exercise 4) Model Selection via Information Criteria
 Another way to reduce the bad surprises when testing a model on new data is to pay close attention to the relative information criteria between the models you are comparing. Let's learn how to do that!
 
