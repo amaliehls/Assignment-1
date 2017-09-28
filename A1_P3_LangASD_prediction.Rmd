@@ -20,9 +20,12 @@ N.B. There are several datasets for this exercise, so pay attention to which one
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+setwd("~/Desktop/R Saves Semester 3/Assignment1")
 library(stringr);library(tidyverse);library(plyr);library(dplyr);library(lme4);library(modelr);library(caret);library(Metrics);library(merTools)
 
-Assignment1data = read.csv("~/Desktop/R Saves Semester 3/Assignment1/Assignment1data")
+data.train = read.csv("~/Desktop/R Saves Semester 3/Assignment1/Assignment1data")
+data.train=na.omit(data.train)
+
 demo_test = read.csv("~/Desktop/R Saves Semester 3/Assignment1/demo_test.csv")
 LU_test = read.csv("~/Desktop/R Saves Semester 3/Assignment1/LU_test.csv")
 token_test = read.csv("~/Desktop/R Saves Semester 3/Assignment1/token_test.csv")
@@ -44,9 +47,9 @@ colnames(demo_test)[24]="nonVerbalIQ"
 colnames(demo_test)[35]="VerbalIQ"
 
 #select columns of interest and save in new df
-demo_test2=select(demo_test,1,2,3,4,7,9,14,24,35)
-LU_test2=select(LU_test,1,2,3,4,8,9)
-token_test2=select(token_test,1,2,3,4,6,7)
+demo_test2=dplyr::select(demo_test,1,2,3,4,7,9,14,24,35)
+LU_test2=dplyr::select(LU_test,1,2,3,4,8,9)
+token_test2=dplyr::select(token_test,1,2,3,4,6,7)
 
 #merge the different dataframes
 mergesemifinal=merge(demo_test2,LU_test2)
@@ -56,11 +59,11 @@ final=merge(mergesemifinal,token_test2)
 visit1 = final[which(final$VISIT=="1"),]
 
 #select only relevant columns
-test=select(visit1,1,7,8,9)
+test=dplyr::select(visit1,1,7,8,9)
 
 #merge the relevant columnsback to the original dataframe
 final2=merge(test,final,by="ID")
-final <- select(final2,1,2,3,4,5,6,7,8,9,13,14,15,16,17,18,19,20)
+final = dplyr::select(final2,1,2,3,4,5,6,7,8,9,13,14,15,16,17,18,19,20)
 
 colnames(final)[2]="ADOS"
 colnames(final)[3]="nonVerbalIQ"
@@ -80,8 +83,7 @@ final$Diagnosis=revalue(final$Diagnosis,c("A"="ASD","B"="TD"))
 
 write.csv(final,file="Clean_testdata")
 
-data.train = Assignment1data
-data.test = final
+data.test=na.omit(final)
 
 ```
 
@@ -90,24 +92,32 @@ data.test = final
 How did your models from last time perform? In this exercise you have to compare the results on the training data () and on the test data. Report both of them. Compare them. Discuss why they are different.
 
 - recreate the models you chose last time (just write the code again and apply it to Assignment2TrainData1.csv)
-- calculate performance of the model on the training data: root mean square error is a good measure. (Tip: google the functions rmse() and predict() )
-- create the test dataset (apply the code from assignment 1 part 1 to clean up the 3 test datasets)
-- test the performance of the models on the test data (Tips: time to reuse "predict()")
-- optional: predictions are never certain, can you identify the uncertainty of the predictions? (e.g. google predictinterval())
 
 ```{r setup, include=FALSE}
+#Recreate model
 model.train = lmer(CHI_MLU ~ VISIT * Diagnosis + types_CHI + (1+VISIT|ID), data=data.train, REML = FALSE)
-
-#root mean square error on train data
-rmse(model.train,data.train) 
-
-#root mean square error on test data
-rmse(model.train,data.test) 
-
 ```
 
-Root mean square error on train data is 0.31
-Root mean square error on test data is 0.57
+- calculate performance of the model on the training data: root mean square error is a good measure. (Tip: google the functions rmse() and predict() )
+
+```{r setup, include=FALSE}
+#root mean square error on train data
+modelr::rmse(model.train,data.train) 
+#Root mean square error on train data is 0.31
+```
+
+- create the test dataset (apply the code from assignment 1 part 1 to clean up the 3 test datasets)
+- test the performance of the models on the test data (Tips: time to reuse "predict()")
+
+```{r setup, include=FALSE}
+#root mean square error on test data
+modelr::rmse(model.train,data.test) 
+#Root mean square error on test data is 0.57
+```
+
+- optional: predictions are never certain, can you identify the uncertainty of the predictions? (e.g. google predictinterval())
+
+
 
 ### Exercise 2) Model Selection via Cross-validation (N.B: ChildMLU!)
 
@@ -117,46 +127,99 @@ In this exercise you have to use cross-validation to calculate the predictive er
 
 - Create the basic model of ChildMLU as a function of Time and Diagnosis (don't forget the random effects!).
 - Make a cross-validated version of the model. (Tips: google the function "createFolds";  loop through each fold, train a model on the other folds and test it on the fold)
-- Report the results and comment on them.
-Train:
-Root mean square error in the 5 folds: 0.3408984 0.3305857 0.3527871 0.3446326 0.3489496
-Mean: 0.3435707
-
-Test:
-Root mean square error in the 5 folds: 0.9327352 0.6015853 0.9676635 0.6663922 0.5383527
-Mean: 0.7413458
-
-- Now try to find the best possible predictive model of ChildMLU, that is, the one that produces the best cross-validated results.
-
-- Bonus Question 1: How would you go comparing the performance of the basic model and the cross-validated model on the testing set?
-- Bonus Question 2: What is the effect of changing the number of folds? Can you plot RMSE as a function of number of folds?
-- Bonus Question 3: compare the cross-validated predictive error against the actual predictive error on the test data
 
 ```{r setup, include=FALSE}
-data.train=na.omit(data.train)
-data.test=na.omit(data.test)
-
 folds = createFolds(unique(data.train$ID),k=5)
+```
+
+```{r setup, include=FALSE}
 n=1
-error.train=NULL
-error.test=NULL
+error.train1=NULL
+error.test1=NULL
 for (i in folds)
   {
   testD=data.train[data.train$ID %in% i,]
   trainD=data.train[!(data.train$ID %in% i),]
   Mtrain = lmer(CHI_MLU ~ VISIT * Diagnosis + (1+VISIT|ID), data=trainD)
   pred = predict(Mtrain,testD, allow.new.levels=TRUE)
-  error.train[n]=modelr::rmse(Mtrain,trainD)
-  error.test[n]=Metrics::rmse(testD$CHI_MLU,pred)
-  
-  #error.trains = c(error.trains,error.train[n])
-  #error.tests = c(error.tests, error.test[n])
+  error.train1[n]=modelr::rmse(Mtrain,trainD)
+  error.test1[n]=Metrics::rmse(testD$CHI_MLU,pred)
 
   n=n+1
   
 }
 
+mean(error.train1)
+mean(error.test1)
+
 ```
+
+- Report the results and comment on them.
+
+Train:
+Root mean square error in the 5 folds: 
+0.3408984 0.3305857 0.3527871 0.3446326 0.3489496
+Mean: 0.3435707
+
+Test:
+Root mean square error in the 5 folds: 
+0.9327352 0.6015853 0.9676635 0.6663922 0.5383527
+Mean: 0.7413458
+
+- Now try to find the best possible predictive model of ChildMLU, that is, the one that produces the best cross-validated results.
+
+```{r setup, include=FALSE}
+#We try adding types as a predictor to the model
+n=1
+error.train2=NULL
+error.test2=NULL
+for (i in folds)
+  {
+  testD=data.train[data.train$ID %in% i,]
+  trainD=data.train[!(data.train$ID %in% i),]
+  Mtrain = lmer(CHI_MLU ~ VISIT * Diagnosis + types_CHI + (1+VISIT|ID), data=trainD)
+  pred = predict(Mtrain,testD, allow.new.levels=TRUE)
+  error.train2[n]=modelr::rmse(Mtrain,trainD)
+  error.test2[n]=Metrics::rmse(testD$CHI_MLU,pred)
+
+  n=n+1
+  
+}
+
+mean(error.train2)
+mean(error.test2)
+
+```
+
+```{r setup, include=FALSE}
+#We now also add mother MLU as a predictor
+n=1
+error.train3=NULL
+error.test3=NULL
+for (i in folds)
+  {
+  testD=data.train[data.train$ID %in% i,]
+  trainD=data.train[!(data.train$ID %in% i),]
+  Mtrain = lmer(CHI_MLU ~ VISIT * Diagnosis + types_CHI + MOT_MLU + (1+VISIT|ID), data=trainD)
+  pred = predict(Mtrain,testD, allow.new.levels=TRUE)
+  error.train3[n]=modelr::rmse(Mtrain,trainD)
+  error.test3[n]=Metrics::rmse(testD$CHI_MLU,pred)
+
+  n=n+1
+  
+}
+
+mean(error.train3)
+mean(error.test3)
+
+```
+
+The model with types as predictor makes the error smaller
+Mother MLU doesn't improve the model much. Therefore we choose to leave it out because we prefer the simpler model
+
+- Bonus Question 1: How would you go comparing the performance of the basic model and the cross-validated model on the testing set?
+- Bonus Question 2: What is the effect of changing the number of folds? Can you plot RMSE as a function of number of folds?
+- Bonus Question 3: compare the cross-validated predictive error against the actual predictive error on the test data
 
 ### Exercise 3) Assessing the single child
 
@@ -244,7 +307,6 @@ Absolute difference = 17.68685 - 12.14037 = 5.54648
 
 - how does the child fare compared to the model predictions at Visit 6? Is the child below or above expectations? (tip: use the predict() function on Bernie's data only and compare the prediction with the actual performance of the child)
 
-
 ```{r setup, include=FALSE}
 #How does the child fare compared to model predictions?
 p <- predict(model.train,bernie, allow.new.levels=TRUE)
@@ -255,14 +317,15 @@ p[6]
 
 ```
 
-```{r setup, include=FALSE}
-
-
-```
 ### OPTIONAL: Exercise 4) Model Selection via Information Criteria
 Another way to reduce the bad surprises when testing a model on new data is to pay close attention to the relative information criteria between the models you are comparing. Let's learn how to do that!
 
 Re-create a selection of possible models explaining ChildMLU (the ones you tested for exercise 2, but now trained on the full dataset and not cross-validated).
+
+```{r setup, include=FALSE}
+
+
+```
 
 Then try to find the best possible predictive model of ChildMLU, that is, the one that produces the lowest information criterion.
 
