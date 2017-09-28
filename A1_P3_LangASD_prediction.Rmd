@@ -20,7 +20,7 @@ N.B. There are several datasets for this exercise, so pay attention to which one
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-library(stringr);library(tidyverse);library(plyr);library(dplyr);library(lme4);library(modelr);library(caret);library(Metrics)
+library(stringr);library(tidyverse);library(plyr);library(dplyr);library(lme4);library(modelr);library(caret);library(Metrics);library(merTools)
 
 Assignment1data = read.csv("~/Desktop/R Saves Semester 3/Assignment1/Assignment1data")
 demo_test = read.csv("~/Desktop/R Saves Semester 3/Assignment1/demo_test.csv")
@@ -156,9 +156,7 @@ for (i in folds)
   
 }
 
-
 ```
-
 
 ### Exercise 3) Assessing the single child
 
@@ -166,55 +164,9 @@ Let's get to business. This new kiddo - Bernie - has entered your clinic. This c
 
 Bernie is one of the six kids in the test dataset, so make sure to extract that child alone for the following analysis.
 
-You want to evaluate:
-
-- how does the child fare in ChildMLU compared to the average TD child at each visit? Define the distance in terms of absolute difference between this Child and the average TD.
-(Tip: recreate the equation of the model: Y=Intercept+BetaX1+BetaX2, etc; input the average of the TD group  for each parameter in the model as X1, X2, etc.).
-
 ```{r setup, include=FALSE}
-#Calculate mean of types for TD during visits
-typesdf=data.train[data.train$VISIT==1 & data.train$Diagnosis=="TD",]
-mean(typesdf$types_CHI)
+#Get Bernies data, with his name but other than that cleaned as the rest
 
-TypesVisit1 = 44.75
-TypesVisit2 = 94.28125
-TypesVisit3 = 133
-TypesVisit4 = 161.0625
-TypesVisit5 = 175.3548
-TypesVisit6 = 174.6071
-
-#Equation for visit 1, TD kids, mean of types and interaction
-#Diagnosis TD is equal to 1
-y = 0.9701074 + 1*0.0048298 + 1*-0.2007901 + 44.75*0.0085584 + 1*1*0.1202236
-y = 0.9701074 + 2*0.0048298 + 1*-0.2007901 + 94.28125*0.0085584 + 1*1*0.1202236
-y = 0.9701074 + 3*0.0048298 + 1*-0.2007901 + 133*0.0085584 + 1*1*0.1202236
-y = 0.9701074 + 4*0.0048298 + 1*-0.2007901 + 161.0625*0.0085584 + 1*1*0.1202236
-y = 0.9701074 + 5*0.0048298 + 1*-0.2007901 + 175.3548*0.0085584 + 1*1*0.1202236
-y = 0.9701074 + 6*0.0048298 + 1*-0.2007901 + 174.6071*0.0085584 + 1*1*0.1202236
-
-MLUvisit1 = 1.277359
-MLUvisit2 = 1.706097
-MLUvisit3 = 2.042298
-MLUvisit4 = 2.287297
-MLUvisit5 = 2.414446
-MLUvisit6 = 2.412877
-
-Bernievisit1
-Bernievisit2
-Bernievisit3
-Bernievisit4
-Bernievisit5
-Bernievisit6
-
-
-
-
-
-```
-
-- how does the child fare compared to the model predictions at Visit 6? Is the child below or above expectations? (tip: use the predict() function on Bernie's data only and compare the prediction with the actual performance of the child)
-
-```{r setup, include=FALSE}
 #merge the relevant columnsback to the original dataframe
 final_withnames <- select(final2,1,2,3,4,5,6,7,8,9,13,14,15,16,17,18,19,20)
 
@@ -232,14 +184,74 @@ final_withnames$Gender=revalue(final_withnames$Gender,c("1"="M","2"="F"))
 final_withnames$Diagnosis=as.factor(final_withnames$Diagnosis)
 final_withnames$Diagnosis=revalue(final_withnames$Diagnosis,c("A"="ASD","B"="TD"))
 
-
 #now we are ready to extract bernie
 bernie=final_withnames[final_withnames$ID=="Bernie",]
 
 ```
 
-```{r setup, include=FALSE}
+You want to evaluate:
 
+- how does the child fare in ChildMLU compared to the average TD child at each visit? Define the distance in terms of absolute difference between this Child and the average TD.
+(Tip: recreate the equation of the model: Y=Intercept+BetaX1+BetaX2, etc; input the average of the TD group  for each parameter in the model as X1, X2, etc.).
+
+```{r setup, include=FALSE}
+#Calculate mean of types for TD during visits (change VISIT== to corresponding visit)
+typesdf=data.train[data.train$VISIT==1 & data.train$Diagnosis=="TD",]
+mean(typesdf$types_CHI)
+
+#Results of the above calculations
+TypesVisit1 = 44.75
+TypesVisit2 = 94.28125
+TypesVisit3 = 133
+TypesVisit4 = 161.0625
+TypesVisit5 = 175.3548
+TypesVisit6 = 174.6071
+
+#Equation: intercept and estimates come from our MLUmodel
+#Intercept, visit, diagnosis, types and interaction between visit and diagnosis
+#Diagnosis TD is equal to 1
+y = 0.9701074 + 1*0.0048298 + 1*-0.2007901 + 44.75*0.0085584 + 1*1*0.1202236
+y = 0.9701074 + 2*0.0048298 + 1*-0.2007901 + 94.28125*0.0085584 + 1*1*0.1202236
+y = 0.9701074 + 3*0.0048298 + 1*-0.2007901 + 133*0.0085584 + 1*1*0.1202236
+y = 0.9701074 + 4*0.0048298 + 1*-0.2007901 + 161.0625*0.0085584 + 1*1*0.1202236
+y = 0.9701074 + 5*0.0048298 + 1*-0.2007901 + 175.3548*0.0085584 + 1*1*0.1202236
+y = 0.9701074 + 6*0.0048298 + 1*-0.2007901 + 174.6071*0.0085584 + 1*1*0.1202236
+
+#Results of y in the equations above
+MLUvisit1 = 1.277359
+MLUvisit2 = 1.706097
+MLUvisit3 = 2.042298
+MLUvisit4 = 2.287297
+MLUvisit5 = 2.414446
+MLUvisit6 = 2.412877
+In total = 12.14037
+
+#Bernies MLU results
+Bernievisit1 = 1.984456
+Bernievisit2 = 2.544444
+Bernievisit3 = 3.353191
+Bernievisit4 = 3.183099
+Bernievisit5 = 3.173252
+Bernievisit6 = 3.448413
+In total = 17.68685
+
+#The absolute difference between TD kids and Bernie
+Absolute difference = 17.68685 - 12.14037 = 5.54648
+
+#Bernie is better than the average TD child - the absolute difference in MLU is 5.54648 morphemes 
+
+```
+
+- how does the child fare compared to the model predictions at Visit 6? Is the child below or above expectations? (tip: use the predict() function on Bernie's data only and compare the prediction with the actual performance of the child)
+
+
+```{r setup, include=FALSE}
+#How does the child fare compared to model predictions?
+p <- predict(model.train,bernie, allow.new.levels=TRUE)
+p[6]
+
+#The model predicts Bernie's MLU at visit 6 to be 2.736441
+#Bernies actual score at visit 6 is 3.448413 so he is above expectation
 
 ```
 
