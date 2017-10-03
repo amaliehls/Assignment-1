@@ -112,6 +112,7 @@ modelr::rmse(model.train,data.train)
 ```{r setup, include=FALSE}
 #root mean square error on test data
 modelr::rmse(model.train,data.test) 
+Metrics::rmse(data.train$CHI_MLU,predict(model.train,data.train,allow.new.levels = TRUE)) #0.3125251 
 #Root mean square error on test data is 0.57
 ```
 
@@ -231,7 +232,7 @@ Bernie is one of the six kids in the test dataset, so make sure to extract that 
 #Get Bernies data, with his name but other than that cleaned as the rest
 
 #merge the relevant columnsback to the original dataframe
-final_withnames <- select(final2,1,2,3,4,5,6,7,8,9,13,14,15,16,17,18,19,20)
+final_withnames <- dplyr::select(final2,1,2,3,4,5,6,7,8,9,13,14,15,16,17,18,19,20)
 
 colnames(final_withnames)[2]="ADOS"
 colnames(final_withnames)[3]="nonVerbalIQ"
@@ -322,14 +323,36 @@ Another way to reduce the bad surprises when testing a model on new data is to p
 
 Re-create a selection of possible models explaining ChildMLU (the ones you tested for exercise 2, but now trained on the full dataset and not cross-validated).
 
-```{r setup, include=FALSE}
+Then try to find the best possible predictive model of ChildMLU, that is, the one that produces the lowest information criterion.
 
+```{r setup, include=FALSE}
+#Basic model with only visit and diagnosis as predictors
+basic_model = lmer(CHI_MLU ~ VISIT + Diagnosis + (1+VISIT|ID), data=data.train,REML=FALSE)
+summary(basic_model)
+
+#Basic model + gender as predictor
+gender_model = lmer(CHI_MLU ~ VISIT * Diagnosis + Gender + (1+VISIT|ID), data=data.train, REML = FALSE)
+summary(gender_model)
+
+#Basic model + types as predictor
+types_model = lmer(CHI_MLU ~ VISIT * Diagnosis + types_CHI + (1+VISIT|ID), data=data.train, REML = FALSE)
+summary(types_model)
+
+#Basic model + types is the model with lowest AIC and BIC. It appears that the data is most likely given this model
 
 ```
 
-Then try to find the best possible predictive model of ChildMLU, that is, the one that produces the lowest information criterion.
 
 - Bonus question for the optional exercise: are information criteria correlated with cross-validated RMSE? That is, if you take AIC for Model 1, Model 2 and Model 3, do they co-vary with their cross-validated RMSE?
+
+```{r setup, include=FALSE}
+
+BIClist = c(BIC(basic_model),BIC(gender_model),BIC(types_model))
+
+RMSElist = c(modelr::rmse(basic_model,data.train),modelr::rmse(gender_model,data.train),modelr::rmse(types_model,data.train))
+
+cor.test(
+```
 
 ### OPTIONAL: Exercise 5): Using Lasso for model selection
 Welcome to the last secret exercise. If you have already solved the previous exercises, and still there's not enough for you, you can expand your expertise by learning about penalizations. Check out this tutorial: http://machinelearningmastery.com/penalized-regression-in-r/ and make sure to google what penalization is, with a focus on L1 and L2-norms. Then try them on your data!
