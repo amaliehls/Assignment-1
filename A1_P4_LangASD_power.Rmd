@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 setwd("~/Desktop/R Saves Semester 3/Assignment1")
 library(lme4)
+library(simr)
 ```
 
 ## Welcome to the fourth exciting part of the Language Development in ASD exercise
@@ -27,17 +28,17 @@ model.train = lmer(CHI_MLU ~ VISIT * Diagnosis + types_CHI + (1+VISIT|ID), data=
 
 model_maineffects = lmer(CHI_MLU ~ VISIT + Diagnosis + types_CHI + (1+VISIT|ID), data=data.train, REML = FALSE)
 
-power_interaction=powerSim(model.train,fixed("VISIT:DiagnosisTD"),nsim=20)
-# 0.00% power
+power_interaction=powerSim(model.train,fixed("VISIT:Diagnosis"),nsim=200)
+# 100% power CI 98.17 - 100
 
-power_visit = powerSim(model_maineffects,fixed("VISIT"),nsim=20)
-# 95 % power
+power_visit = powerSim(model_maineffects,fixed("VISIT"),nsim=200)
+# 91 % power CI 86.15 - 94.58
 
-power_diagnosis = powerSim(model_maineffects,fixed("DiagnosisTD"),nsim=20)
-# 0.00 % power
+power_diagnosis = powerSim(model_maineffects,fixed("DiagnosisTD"),nsim=200)
+# 0.00 % power CI 0.00 - 1.83
 
-power_types=powerSim(model.train,fixed("types_CHI"),nsim=20)
-#100 % power
+power_types=powerSim(model.train,fixed("types_CHI"),nsim=200)
+#100 % power CI 98.17 - 100
 
 ```
 
@@ -63,12 +64,14 @@ plot(powercurvediagnosis)
 
 
 fixef(model.train)["VISIT:Diagnosis"] = 1
-powercurveinteraction = powerCurve(model.train, fixed("VISIT:DiagnosisTD"),along = "ID",nsim = 10)
+powercurveinteraction = powerCurve(model.train, fixed("VISIT:Diagnosis"),along = "ID",nsim = 20)
 plot(powercurveinteraction)
 
+# To detect an effect of 1 morpheme pr visit between TD and ASD we need 22 participants to reach a power threshold of 80 % 
 
+```
 
-
+```{r}
 ### Riccardo's clumsy function to simulate new participants
 ### TO DO points are only notes for myself, so not part of the assignment
 
@@ -124,6 +127,8 @@ createNewData <- function (participants,visits,model){
 ### Exercise 3
 
 Assume you have only the resources to collect 30 kids (15 with ASD and 15 TDs). Identify the power for each relevant effect and discuss whether it's worth to run the study and why.
+
+To detect the effect of visit and the interaction of visit and diagnosis it is enough with 30 participants
 
 
 
